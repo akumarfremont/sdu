@@ -99,14 +99,17 @@ export default function ColdOpen({ onDone, autoPlay = false }: Props) {
         phase === "fadeOut" ? "opacity-0" : "opacity-100"
       }`}
     >
-      {/* Audio elements (sources may 404; we handle that gracefully) */}
-      <audio
-        ref={voiceRef}
-        src="/audio/voiceover.mp3"
-        preload="auto"
-        playsInline
-      />
-      <audio ref={dunRef} src="/audio/dun-dun.mp3" preload="auto" playsInline />
+      {/* Audio elements. Each element offers .mp3 and .m4a sources so the
+          browser can pick whichever exists. If neither is present in
+          /public/audio/, the visual sequence still plays silently. */}
+      <audio ref={voiceRef} preload="auto" playsInline>
+        <source src="/audio/voiceover.mp3" type="audio/mpeg" />
+        <source src="/audio/voiceover.m4a" type="audio/mp4" />
+      </audio>
+      <audio ref={dunRef} preload="auto" playsInline>
+        <source src="/audio/dun-dun.mp3" type="audio/mpeg" />
+        <source src="/audio/dun-dun.m4a" type="audio/mp4" />
+      </audio>
 
       {phase === "primer" ? (
         <button
