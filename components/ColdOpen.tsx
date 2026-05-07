@@ -42,14 +42,16 @@ export default function ColdOpen({ onDone, autoPlay = false }: Props) {
     onDoneRef.current = onDone;
   });
 
-  // Sequence timing (ms from the moment the user starts the open):
+  // Sequence timing (ms from the moment the user starts the open).
+  // The voiceover is ~11s long; the dun-dun sting lands AFTER the last
+  // line ("These are their cases.") finishes, which is how the show does it.
   //   0      -> v1
   //   3500   -> v2
-  //   8000   -> v3
-  //   9500   -> dunDun
-  //   10100  -> title
-  //   11700  -> fadeOut
-  //   12200  -> done
+  //   7800   -> v3
+  //   11800  -> dunDun (voice has ended; brief beat; sting drops)
+  //   12300  -> title  (held for 2.5s so the brand lands)
+  //   14800  -> fadeOut
+  //   15400  -> done
   function startSequence() {
     if (startedRef.current) return;
     startedRef.current = true;
@@ -65,7 +67,7 @@ export default function ColdOpen({ onDone, autoPlay = false }: Props) {
 
     const t = timersRef.current;
     t.push(window.setTimeout(() => setPhase("v2"), 3500));
-    t.push(window.setTimeout(() => setPhase("v3"), 8000));
+    t.push(window.setTimeout(() => setPhase("v3"), 7800));
     t.push(
       window.setTimeout(() => {
         setPhase("dunDun");
@@ -74,11 +76,11 @@ export default function ColdOpen({ onDone, autoPlay = false }: Props) {
           d.currentTime = 0;
           d.play().catch(() => {});
         }
-      }, 9500),
+      }, 11800),
     );
-    t.push(window.setTimeout(() => setPhase("title"), 10100));
-    t.push(window.setTimeout(() => setPhase("fadeOut"), 11700));
-    t.push(window.setTimeout(() => onDoneRef.current(), 12200));
+    t.push(window.setTimeout(() => setPhase("title"), 12300));
+    t.push(window.setTimeout(() => setPhase("fadeOut"), 14800));
+    t.push(window.setTimeout(() => onDoneRef.current(), 15400));
   }
 
   // Run once: kick off the sequence if autoPlay; always wire unmount cleanup.
