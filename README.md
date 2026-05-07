@@ -9,6 +9,8 @@ The structural hook: every case opens with an AI diligence agent's analysis.
 The player's job is to decide whether to follow it or override it. Override
 rate is the headline metric — it's the muscle that agents can't replace.
 
+Live at https://sdu-drab.vercel.app/.
+
 ## Stack
 
 - Next.js 15 (App Router) + TypeScript
