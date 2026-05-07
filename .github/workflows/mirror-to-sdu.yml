@@ -1,0 +1,37 @@
+name: Mirror to sdu repo
+
+# Whenever a push lands on the SDU dev branch in this (carveoutai) repo,
+# force-push the same commits to akumarfremont/sdu's `main` branch. Vercel
+# watches sdu/main and redeploys automatically. End result: a single push
+# here triggers a live deploy with no manual mirroring step.
+
+on:
+  push:
+    branches:
+      - claude/build-sdu-game-app-7KMSv
+
+# Avoid two mirror runs racing each other on rapid pushes.
+concurrency:
+  group: mirror-to-sdu
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Force-push to sdu/main
+        env:
+          MIRROR_PAT: ${{ secrets.MIRROR_PAT }}
+        run: |
+          if [ -z "$MIRROR_PAT" ]; then
+            echo "::error::MIRROR_PAT secret is missing. Add it under Settings → Secrets → Actions."
+            exit 1
+          fi
+          git push --force \
+            "https://x-access-token:${MIRROR_PAT}@github.com/akumarfremont/sdu.git" \
+            HEAD:main
