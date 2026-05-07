@@ -23,6 +23,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # Don't let actions/checkout install GITHUB_TOKEN as the credential
+          # helper — it would intercept our PAT-authenticated push below and
+          # try to authenticate as github-actions[bot], which has no access
+          # to akumarfremont/sdu.
+          persist-credentials: false
 
       - name: Force-push to sdu/main
         env:
