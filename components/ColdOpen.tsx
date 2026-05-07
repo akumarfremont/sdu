@@ -1,25 +1,25 @@
 "use client";
 
-// 12-second cold open. Black ground, white serif text, deep voiceover, dun-dun,
-// title card. Audio comes from /audio/voiceover.mp3 and /audio/dun-dun.mp3.
-// If those files aren't present (or autoplay is blocked) the visual timing
-// runs anyway — the show goes on.
+// Cold open. The audio file at /audio/voiceover.mp3 contains the full
+// sequence: voice ("In the M&A justice system..." through "These are their
+// cases."), a brief beat of silence, then the dun-dun sting at the end.
+// The visual phases are timed to that single track. If the file is missing
+// or autoplay is blocked, the visuals run silent on the same schedule.
 
 import { useEffect, useRef, useState } from "react";
 
 type Phase =
-  | "primer" // initial fade-in, "press to begin" (only if user gesture not given)
-  | "v1" // line 1
-  | "v2" // line 2
-  | "v3" // line 3
-  | "dunDun" // dun-dun white flash
-  | "title" // SDU title card
+  | "primer"
+  | "v1"
+  | "v2"
+  | "v3"
+  | "dunDun"
+  | "title"
   | "fadeOut";
 
 type Props = {
-  /** Called once the cold open completes. */
   onDone: () => void;
-  /** If true, skips the press-to-start gate and plays straight through (replay mode). */
+  /** Skips the "Press to begin" gate — for the splash hand-off after a tap. */
   autoPlay?: boolean;
 };
 
@@ -29,35 +29,47 @@ const LINE_2 =
   "But the judgment calls — the ones that close deals or sink them — are made by humans.";
 const LINE_3 = "These are their cases.";
 
+// Default timings assume a merged audio file ~12.5s long with the dun-dun
+// landing at ~11.5s. If the actual file's duration loads in time, we
+// recompute against it so the visuals stay in sync regardless of file length.
+const DEFAULT_TOTAL_MS = 12500;
+const DEFAULT_DUN_DUN_AT = 11500;
+const TITLE_HOLD_MS = 2500;
+const FADE_MS = 500;
+
 export default function ColdOpen({ onDone, autoPlay = false }: Props) {
   const [phase, setPhase] = useState<Phase>(autoPlay ? "v1" : "primer");
   const voiceRef = useRef<HTMLAudioElement | null>(null);
-  const dunRef = useRef<HTMLAudioElement | null>(null);
   const timersRef = useRef<number[]>([]);
   const startedRef = useRef(false);
   const onDoneRef = useRef(onDone);
 
-  // Keep latest onDone so timers fire the right callback even if it changes.
   useEffect(() => {
     onDoneRef.current = onDone;
   });
 
-  // Sequence timing (ms from the moment the user starts the open).
-  // The voiceover is ~11s long; the dun-dun sting lands AFTER the last
-  // line ("These are their cases.") finishes, which is how the show does it.
-  //   0      -> v1
-  //   3500   -> v2
-  //   7800   -> v3
-  //   11800  -> dunDun (voice has ended; brief beat; sting drops)
-  //   12300  -> title  (held for 2.5s so the brand lands)
-  //   14800  -> fadeOut
-  //   15400  -> done
   function startSequence() {
     if (startedRef.current) return;
     startedRef.current = true;
     setPhase("v1");
 
     const v = voiceRef.current;
+    let totalMs = DEFAULT_TOTAL_MS;
+    let dunDunAt = DEFAULT_DUN_DUN_AT;
+
+    if (v && Number.isFinite(v.duration) && v.duration > 0) {
+      totalMs = Math.round(v.duration * 1000);
+      // Dun-dun sting is the last ~1.0s of the file
+      dunDunAt = Math.max(8000, totalMs - 1000);
+    }
+
+    // Visual line 3 ("These are their cases.") shows for the last ~3s
+    // of the voice, ending right before the dun-dun.
+    const v3At = Math.max(7000, dunDunAt - 3500);
+    const titleAt = totalMs;
+    const fadeAt = titleAt + TITLE_HOLD_MS;
+    const doneAt = fadeAt + FADE_MS;
+
     if (v) {
       v.currentTime = 0;
       v.play().catch(() => {
@@ -67,23 +79,14 @@ export default function ColdOpen({ onDone, autoPlay = false }: Props) {
 
     const t = timersRef.current;
     t.push(window.setTimeout(() => setPhase("v2"), 3500));
-    t.push(window.setTimeout(() => setPhase("v3"), 7800));
-    t.push(
-      window.setTimeout(() => {
-        setPhase("dunDun");
-        const d = dunRef.current;
-        if (d) {
-          d.currentTime = 0;
-          d.play().catch(() => {});
-        }
-      }, 11800),
-    );
-    t.push(window.setTimeout(() => setPhase("title"), 12300));
-    t.push(window.setTimeout(() => setPhase("fadeOut"), 14800));
-    t.push(window.setTimeout(() => onDoneRef.current(), 15400));
+    t.push(window.setTimeout(() => setPhase("v3"), v3At));
+    t.push(window.setTimeout(() => setPhase("dunDun"), dunDunAt));
+    t.push(window.setTimeout(() => setPhase("title"), titleAt));
+    t.push(window.setTimeout(() => setPhase("fadeOut"), fadeAt));
+    t.push(window.setTimeout(() => onDoneRef.current(), doneAt));
   }
 
-  // Run once: kick off the sequence if autoPlay; always wire unmount cleanup.
+  // Run once on mount: kick off if autoPlay; always wire unmount cleanup.
   useEffect(() => {
     if (autoPlay) startSequence();
     return () => {
@@ -101,16 +104,10 @@ export default function ColdOpen({ onDone, autoPlay = false }: Props) {
         phase === "fadeOut" ? "opacity-0" : "opacity-100"
       }`}
     >
-      {/* Audio elements. Each element offers .mp3 and .m4a sources so the
-          browser can pick whichever exists. If neither is present in
-          /public/audio/, the visual sequence still plays silently. */}
+      {/* Single merged audio file. .mp3 and .m4a sources both attempted. */}
       <audio ref={voiceRef} preload="auto" playsInline>
         <source src="/audio/voiceover.mp3" type="audio/mpeg" />
         <source src="/audio/voiceover.m4a" type="audio/mp4" />
-      </audio>
-      <audio ref={dunRef} preload="auto" playsInline>
-        <source src="/audio/dun-dun.mp3" type="audio/mpeg" />
-        <source src="/audio/dun-dun.m4a" type="audio/mp4" />
       </audio>
 
       {phase === "primer" ? (
