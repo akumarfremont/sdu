@@ -6,7 +6,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { usePlayer, enterAsNew, seedDemo } from "@/lib/store";
+import { usePlayer, enterAsNew } from "@/lib/store";
 
 export default function SplashPage() {
   const router = useRouter();
@@ -25,11 +25,6 @@ export default function SplashPage() {
   function enter() {
     enterAsNew();
     router.push("/cold-open");
-  }
-
-  function useDemo() {
-    seedDemo();
-    router.push("/dashboard");
   }
 
   return (
@@ -61,17 +56,9 @@ export default function SplashPage() {
         <button
           type="button"
           onClick={enter}
-          className="mt-12 flex h-14 w-full items-center justify-center bg-evidence font-mono text-[13px] font-semibold uppercase tracking-[0.22em] text-ink hover:bg-evidence/90 active:animate-tapPulse"
+          className="mt-12 flex h-14 w-full items-center justify-center bg-evidence font-mono text-[13px] font-semibold uppercase tracking-[0.22em] text-ink shadow-[0_0_0_1px_rgba(201,169,97,0.5),0_0_28px_rgba(201,169,97,0.35)] hover:bg-evidence/90 active:animate-tapPulse"
         >
           Enter SDU
-        </button>
-
-        <button
-          type="button"
-          onClick={useDemo}
-          className="mt-5 self-center font-mono text-[11px] uppercase tracking-[0.22em] text-bone/40 underline-offset-4 hover:text-bone hover:underline"
-        >
-          Use demo account
         </button>
 
         <footer className="mt-auto pt-12 text-center font-proc text-[11px] italic tracking-[0.16em] text-bone/35">

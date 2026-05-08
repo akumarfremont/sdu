@@ -1,164 +1,125 @@
 "use client";
 
-// Cold open. The audio file at /audio/voiceover.mp3 contains the full
-// sequence: voice ("In the M&A justice system..." through "These are their
-// cases."), a brief beat of silence, then the dun-dun sting at the end.
-// The visual phases are timed to that single track. If the file is missing
-// or autoplay is blocked, the visuals run silent on the same schedule.
+// Cold open redesigned for user-paced advancement.
+// One screen with all three voiceover lines visible + a highlighted
+// "Enter Sharp Diligence Unit" button. Voiceover (which contains the
+// dun-dun sting appended at the end) auto-plays on mount; user taps the
+// button to advance to the title card. If user waits, the audio's `ended`
+// event auto-advances. This eliminates the timing fragility of the
+// multi-phase auto-progressing version.
 
 import { useEffect, useRef, useState } from "react";
 
-type Phase =
-  | "primer"
-  | "v1"
-  | "v2"
-  | "v3"
-  | "dunDun"
-  | "title"
-  | "fadeOut";
+type Phase = "text" | "title" | "fadeOut";
+
+const LINES = [
+  "In the M&A justice system, the analysis is done by machines.",
+  "But the judgment calls — the ones that close deals or sink them — are made by humans.",
+  "These are their cases.",
+];
 
 type Props = {
   onDone: () => void;
-  /** Skips the "Press to begin" gate — for the splash hand-off after a tap. */
+  /** Kept for backward compat; ignored. The cold open always plays. */
   autoPlay?: boolean;
 };
 
-const LINE_1 =
-  "In the M&A justice system, the analysis is done by machines.";
-const LINE_2 =
-  "But the judgment calls — the ones that close deals or sink them — are made by humans.";
-const LINE_3 = "These are their cases.";
-
-// Default timings assume a merged audio file ~12.5s long with the dun-dun
-// landing at ~11.5s. If the actual file's duration loads in time, we
-// recompute against it so the visuals stay in sync regardless of file length.
-const DEFAULT_TOTAL_MS = 12500;
-const DEFAULT_DUN_DUN_AT = 11500;
-const TITLE_HOLD_MS = 2500;
-const FADE_MS = 500;
-
-export default function ColdOpen({ onDone, autoPlay = false }: Props) {
-  const [phase, setPhase] = useState<Phase>(autoPlay ? "v1" : "primer");
-  const voiceRef = useRef<HTMLAudioElement | null>(null);
-  const timersRef = useRef<number[]>([]);
-  const startedRef = useRef(false);
+export default function ColdOpen({ onDone }: Props) {
+  const [phase, setPhase] = useState<Phase>("text");
+  const [flashOn, setFlashOn] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const onDoneRef = useRef(onDone);
+  const advancedRef = useRef(false);
 
   useEffect(() => {
     onDoneRef.current = onDone;
   });
 
-  function startSequence() {
-    if (startedRef.current) return;
-    startedRef.current = true;
-    setPhase("v1");
-
-    const v = voiceRef.current;
-    let totalMs = DEFAULT_TOTAL_MS;
-    let dunDunAt = DEFAULT_DUN_DUN_AT;
-
-    if (v && Number.isFinite(v.duration) && v.duration > 0) {
-      totalMs = Math.round(v.duration * 1000);
-      // Dun-dun sting is the last ~1.0s of the file
-      dunDunAt = Math.max(8000, totalMs - 1000);
-    }
-
-    // Visual line 3 ("These are their cases.") shows for the last ~3s
-    // of the voice, ending right before the dun-dun.
-    const v3At = Math.max(7000, dunDunAt - 3500);
-    const titleAt = totalMs;
-    const fadeAt = titleAt + TITLE_HOLD_MS;
-    const doneAt = fadeAt + FADE_MS;
-
-    if (v) {
-      v.currentTime = 0;
-      v.play().catch(() => {
-        /* missing file or autoplay blocked — visuals run silent */
+  // Auto-play voiceover on mount. Browser may block (no recent gesture);
+  // visuals run regardless. The audio file is expected to contain the
+  // dun-dun sting concatenated to the end.
+  useEffect(() => {
+    const a = audioRef.current;
+    if (a) {
+      a.currentTime = 0;
+      a.play().catch(() => {
+        /* autoplay blocked or file missing — ok */
       });
     }
-
-    const t = timersRef.current;
-    t.push(window.setTimeout(() => setPhase("v2"), 3500));
-    t.push(window.setTimeout(() => setPhase("v3"), v3At));
-    t.push(window.setTimeout(() => setPhase("dunDun"), dunDunAt));
-    t.push(window.setTimeout(() => setPhase("title"), titleAt));
-    t.push(window.setTimeout(() => setPhase("fadeOut"), fadeAt));
-    t.push(window.setTimeout(() => onDoneRef.current(), doneAt));
-  }
-
-  // Run once on mount: kick off if autoPlay; always wire unmount cleanup.
-  useEffect(() => {
-    if (autoPlay) startSequence();
     return () => {
-      for (const id of timersRef.current) window.clearTimeout(id);
-      timersRef.current = [];
-      const v = voiceRef.current;
-      if (v) v.pause();
+      const cur = audioRef.current;
+      if (cur) cur.pause();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function advance() {
+    if (advancedRef.current) return;
+    advancedRef.current = true;
+
+    setPhase("title");
+    setFlashOn(true);
+    window.setTimeout(() => setFlashOn(false), 160);
+    window.setTimeout(() => setPhase("fadeOut"), 2200);
+    window.setTimeout(() => onDoneRef.current(), 2700);
+  }
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-ink text-bone transition-opacity duration-500 ${
+      className={`fixed inset-0 z-50 flex flex-col bg-ink text-bone transition-opacity duration-500 ${
         phase === "fadeOut" ? "opacity-0" : "opacity-100"
       }`}
     >
-      {/* Single merged audio file. .mp3 and .m4a sources both attempted. */}
-      <audio ref={voiceRef} preload="auto" playsInline>
+      <audio
+        ref={audioRef}
+        preload="auto"
+        playsInline
+        onEnded={advance}
+      >
         <source src="/audio/voiceover.mp3" type="audio/mpeg" />
         <source src="/audio/voiceover.m4a" type="audio/mp4" />
       </audio>
 
-      {phase === "primer" ? (
-        <button
-          type="button"
-          onClick={startSequence}
-          className="group flex flex-col items-center gap-6 px-6 text-center"
-        >
-          <span className="font-proc text-[15px] tracking-proc text-bone/60">
-            Press to begin
-          </span>
-          <span className="font-proc text-[28px] tracking-proc text-bone">
-            COLD OPEN
-          </span>
-          <span className="mt-2 h-px w-12 bg-bone/30 transition-all group-active:w-20" />
-        </button>
-      ) : (
-        <>
-          <VOLine visible={phase === "v1"} text={LINE_1} />
-          <VOLine visible={phase === "v2"} text={LINE_2} />
-          <VOLine visible={phase === "v3"} text={LINE_3} />
-          <div
-            className={`pointer-events-none absolute inset-0 bg-bone transition-opacity duration-150 ${
-              phase === "dunDun" ? "opacity-100" : "opacity-0"
-            }`}
-            aria-hidden="true"
-          />
-          {(phase === "title" || phase === "fadeOut") && (
-            <div className="flex flex-col items-center gap-3 px-6 text-center animate-titleZoom">
-              <div className="font-proc text-[64px] font-bold tracking-proc leading-none text-bone">
-                SDU
-              </div>
-              <div className="font-proc text-[14px] italic tracking-[0.22em] text-bone/80">
-                Sharp Diligence Unit
-              </div>
-            </div>
-          )}
-        </>
+      {phase === "text" && (
+        <div className="mx-auto flex w-full max-w-screen flex-1 flex-col px-6 pb-8 pt-12">
+          <div className="flex flex-1 flex-col justify-center gap-7">
+            {LINES.map((line, i) => (
+              <p
+                key={i}
+                className="text-center font-proc text-[19px] leading-[1.55] tracking-[0.04em] text-bone animate-coldFadeIn"
+                style={{ animationDelay: `${i * 200}ms` }}
+              >
+                {line}
+              </p>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={advance}
+            className="mt-8 flex h-14 w-full items-center justify-center bg-evidence font-mono text-[13px] font-semibold uppercase tracking-[0.22em] text-ink shadow-[0_0_0_1px_rgba(201,169,97,0.5),0_0_28px_rgba(201,169,97,0.35)] transition hover:bg-evidence/90 active:animate-tapPulse"
+          >
+            Enter Sharp Diligence Unit
+          </button>
+        </div>
+      )}
+
+      {/* Brief white pulse on phase transition (~160ms) */}
+      <div
+        className={`pointer-events-none absolute inset-0 bg-bone transition-opacity duration-150 ${
+          flashOn ? "opacity-100" : "opacity-0"
+        }`}
+        aria-hidden="true"
+      />
+
+      {(phase === "title" || phase === "fadeOut") && (
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center animate-titleZoom">
+          <div className="font-proc text-[64px] font-bold tracking-proc leading-none text-bone">
+            SDU
+          </div>
+          <div className="font-proc text-[14px] italic tracking-[0.22em] text-bone/80">
+            Sharp Diligence Unit
+          </div>
+        </div>
       )}
     </div>
-  );
-}
-
-function VOLine({ visible, text }: { visible: boolean; text: string }) {
-  return (
-    <p
-      className={`absolute max-w-[320px] px-6 text-center font-proc text-[19px] leading-[1.55] tracking-[0.04em] text-bone transition-opacity duration-500 ${
-        visible ? "opacity-100" : "opacity-0"
-      }`}
-    >
-      {text}
-    </p>
   );
 }
