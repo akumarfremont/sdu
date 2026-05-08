@@ -1,30 +1,21 @@
 "use client";
 
-// Splash. First-time players tap "Enter SDU" — a player is created with a
-// default handle, the cold open plays once, then the dashboard. Returning
-// players are redirected straight through.
+// Splash / login page. First-time players tap "Enter SDU" — a player is
+// created and they're routed to /cold-open. Returning players are redirected
+// to /cold-open if they haven't seen it yet, otherwise straight to /dashboard.
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  usePlayer,
-  enterAsNew,
-  markColdOpenSeen,
-  seedDemo,
-} from "@/lib/store";
-import ColdOpen from "@/components/ColdOpen";
+import { usePlayer, enterAsNew, seedDemo } from "@/lib/store";
 
 export default function SplashPage() {
   const router = useRouter();
   const player = usePlayer();
-  const [phase, setPhase] = useState<"landing" | "coldOpen" | "redirect">(
-    "landing",
-  );
 
   useEffect(() => {
     if (player) {
       if (!player.has_seen_cold_open) {
-        setPhase("coldOpen");
+        router.replace("/cold-open");
       } else {
         router.replace("/dashboard");
       }
@@ -33,28 +24,13 @@ export default function SplashPage() {
 
   function enter() {
     enterAsNew();
-    setPhase("coldOpen");
+    router.push("/cold-open");
   }
 
   function useDemo() {
     seedDemo();
-    setPhase("redirect");
-    router.replace("/dashboard");
+    router.push("/dashboard");
   }
-
-  if (phase === "coldOpen") {
-    return (
-      <ColdOpen
-        autoPlay
-        onDone={() => {
-          markColdOpenSeen();
-          router.replace("/dashboard");
-        }}
-      />
-    );
-  }
-
-  if (phase === "redirect") return null;
 
   return (
     <main className="min-h-screen bg-ink text-bone">

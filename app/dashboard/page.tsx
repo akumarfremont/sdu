@@ -79,7 +79,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <Link
-            href="/intro"
+            href="/cold-open"
             className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-graphite-dim hover:text-ink"
           >
             Replay cold open
