@@ -98,6 +98,7 @@ export default function CasePlayer({ caseData }: { caseData: Case }) {
     return (
       <CaseOpen
         dateStamp={caseData.stage_one.date_stamp}
+        isCapstone={caseData.status === "capstone"}
         onDone={() => setPhase("stage1")}
       />
     );
@@ -245,6 +246,7 @@ function CaseStageWithOpen({
     return (
       <CaseOpen
         dateStamp={caseData.stage_two.date_stamp}
+        isCapstone={caseData.status === "capstone"}
         onDone={() => setShowOpen(false)}
       />
     );

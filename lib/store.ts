@@ -172,43 +172,49 @@ export function reset() {
   write(null);
 }
 
-// Test bypass: a demo player with two completed cases so the dashboard renders
-// meaningfully. Triggered from the splash via a "Use demo account" link.
+// Test bypass: a demo player with cases 2, 3, 5, 6, 7 completed so the
+// dashboard renders meaningfully AND the demo path is "play case 1, play
+// case 4, then the capstone unlocks." Cases 1 and 4 are deliberately left
+// open. Triggered from the splash via a "Use demo account" link.
 export function seedDemo(): Player {
+  const dayAgo = (n: number) =>
+    new Date(Date.now() - 1000 * 60 * 60 * 24 * n).toISOString();
   const player: Player = {
     handle: "vmehta",
-    signed_up_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4).toISOString(),
+    signed_up_at: dayAgo(8),
     has_seen_cold_open: true,
     attempts: [
+      // Case 2 (single-stage, correct=B): chose B at 70 — correct override.
       {
-        case_id: 1,
-        stage_one: {
-          choice: "C",
-          confidence: 75,
-          correct: true,
-          defensible: true,
-        },
-        completed_at: new Date(
-          Date.now() - 1000 * 60 * 60 * 24 * 3,
-        ).toISOString(),
+        case_id: 2,
+        stage_one: { choice: "B", confidence: 70, correct: true, defensible: true },
+        completed_at: dayAgo(7),
       },
+      // Case 3 (single-stage, correct=B): chose A at 60 — followed agent, wrong.
       {
-        case_id: 4,
-        stage_one: {
-          choice: "C",
-          confidence: 65,
-          correct: false,
-          defensible: true,
-        },
-        stage_two: {
-          choice: "D",
-          confidence: 80,
-          correct: true,
-          defensible: true,
-        },
-        completed_at: new Date(
-          Date.now() - 1000 * 60 * 60 * 24 * 1,
-        ).toISOString(),
+        case_id: 3,
+        stage_one: { choice: "A", confidence: 60, correct: false, defensible: false },
+        completed_at: dayAgo(6),
+      },
+      // Case 5 (two-stage, correct=D both): chose D, D — both correct.
+      {
+        case_id: 5,
+        stage_one: { choice: "D", confidence: 75, correct: true, defensible: true },
+        stage_two: { choice: "D", confidence: 80, correct: true, defensible: true },
+        completed_at: dayAgo(4),
+      },
+      // Case 6 (single-stage, correct=B): chose D at 70 — defensible (cautious override).
+      {
+        case_id: 6,
+        stage_one: { choice: "D", confidence: 70, correct: false, defensible: true },
+        completed_at: dayAgo(3),
+      },
+      // Case 7 (two-stage, correct=D both): chose D, D — both correct.
+      {
+        case_id: 7,
+        stage_one: { choice: "D", confidence: 75, correct: true, defensible: true },
+        stage_two: { choice: "D", confidence: 80, correct: true, defensible: true },
+        completed_at: dayAgo(1),
       },
     ],
   };

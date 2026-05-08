@@ -1,27 +1,35 @@
-# SDU cold-open audio
+# SDU audio assets
 
-The cold-open component looks for two files here:
+The app looks for these files here. All are optional — if missing, the
+visuals still play, the audio just stays silent.
 
-- `voiceover.mp3` — the narration ("In the M&A justice system…").
-- `dun-dun.mp3` — the iconic procedural sting.
+- `voiceover.mp3` — cold-open narration ("In the M&A justice system…"),
+  ideally with the dun-dun sting concatenated at the end of the same file.
+- `dun-dun.mp3` *(optional, fallback if not in the merged voiceover)*.
+- `gavel.mp3` — short gavel hit, played at the start of the capstone case
+  (Case 08, "The Helios-Lumina Deposition").
 
-If either is missing, the visual sequence still plays — it just runs silent.
-Browsers will return 404 in the console, which is harmless.
+`.m4a` works too — the audio elements offer both `.mp3` and `.m4a` sources.
 
 ## Generating the voiceover
 
-Use ElevenLabs (or any TTS with a deep, broadcast, masculine voice — "Adam"
-or "Stoneveil" work). Script:
+Use ElevenLabs (or any TTS with a deep, broadcast, masculine voice — "Adam",
+"Stoneveil"). Script:
 
 > "In the M&A justice system, the analysis is done by machines. But the
 > judgment calls — the ones that close deals or sink them — are made by
 > humans. These are their cases."
 
-Target length: ~9 seconds. Drop the resulting MP3 here as `voiceover.mp3`.
+Target length: ~11 seconds. Then merge the dun-dun sting onto the end with
+a short silence beat using https://audio-joiner.com or similar. The merged
+file plays as a single continuous track in the cold open.
 
 ## Sourcing the dun-dun
 
-Search Freesound or Pixabay for "law and order sound effect". Save as
-`dun-dun.mp3`. Trim to ~600ms.
+Search Pixabay or Freesound for "law and order" / "dramatic sting". Trim to
+~1 second.
 
-Both files should be small (<200KB each) so the cold open feels instant.
+## Sourcing the gavel
+
+Search Pixabay or Freesound for "gavel hit" / "court gavel". Single short
+strike, ~600ms. Save as `gavel.mp3`.
