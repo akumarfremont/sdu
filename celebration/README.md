@@ -29,8 +29,11 @@ pnpm typecheck  # tsc --noEmit
 ```
 
 > This app lives in the `celebration/` sub-folder of the repository, alongside the
-> existing SDU project at the repo root. To deploy it on Vercel, set the project's
-> **Root Directory** to `celebration`.
+> existing SDU project at the repo root. The repo's root `vercel.json` installs,
+> builds and serves *this* app, so a Vercel deployment of the repository is the
+> anniversary site. If Vercel's Next.js detection ever objects to the nested
+> output, the supported alternative is to set the project's **Root Directory** to
+> `celebration` — `celebration/vercel.json` is already set up for that.
 
 ---
 
