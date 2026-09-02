@@ -1,0 +1,141 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --nav-height: 4rem;
+    --bottom-nav-height: 4.5rem;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-ivory text-ink font-body antialiased;
+    /* A whisper of warm paper grain behind everything. */
+    background-image: radial-gradient(
+        circle at 12% 8%,
+        rgba(239, 182, 91, 0.1) 0%,
+        transparent 42%
+      ),
+      radial-gradient(circle at 88% 4%, rgba(148, 203, 198, 0.12) 0%, transparent 38%),
+      radial-gradient(circle at 50% 100%, rgba(196, 89, 106, 0.07) 0%, transparent 55%);
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-plum-600;
+    font-feature-settings: "liga" 1, "dlig" 1;
+  }
+
+  ::selection {
+    @apply bg-marigold-100 text-plum-700;
+  }
+
+  /* One consistent, visible focus ring across the whole site. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-marigold-400 ring-offset-2 ring-offset-ivory rounded-lg;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-content px-5 sm:px-8;
+  }
+
+  .card {
+    @apply rounded-3xl border border-sand/70 bg-white/85 shadow-card backdrop-blur-[2px];
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lift hover:border-marigold-200;
+  }
+
+  /* Main-day treatment: the 25th, 26th and 27th. */
+  .card-main {
+    @apply border-marigold-200 bg-gradient-to-br from-marigold-50 via-white to-white shadow-lift;
+  }
+
+  .eyebrow {
+    @apply text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-marigold-600;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset;
+  }
+
+  .btn {
+    @apply inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition-all duration-200 active:scale-[0.98];
+  }
+
+  .btn-primary {
+    @apply btn bg-plum-600 text-ivory shadow-card hover:bg-plum-700;
+  }
+
+  .btn-marigold {
+    @apply btn bg-marigold-400 text-plum-700 shadow-card hover:bg-marigold-300;
+  }
+
+  .btn-ghost {
+    @apply btn border border-sand bg-white/70 text-plum-600 hover:border-marigold-200 hover:bg-marigold-50;
+  }
+
+  .link-underline {
+    @apply underline decoration-marigold-300 decoration-2 underline-offset-4 transition-colors hover:decoration-marigold-500;
+  }
+
+  /* Thin decorative rule with a diamond at its centre. */
+  .rule-ornament {
+    @apply relative h-px w-full bg-gradient-to-r from-transparent via-sand to-transparent;
+  }
+
+  .prose-warm p {
+    @apply text-[0.975rem] leading-relaxed text-ink-soft;
+  }
+}
+
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pad-bottom-nav {
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 1rem);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scroll-mt-nav {
+    scroll-margin-top: calc(var(--nav-height) + 1rem);
+  }
+}
